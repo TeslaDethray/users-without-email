@@ -245,33 +245,6 @@ class UsersWithoutEmail_OptionsManager {
     $settingsGroup = get_class($this) . '-settings-group';
     ?>
     <div class="wrap">
-      <h2><?php _e('System Settings', 'users-without-email'); ?></h2>
-      <table class="form-table"><tbody>
-      <tr><td><?php _e('System', 'users-without-email'); ?></td><td><?php echo php_uname(); ?></td></tr>
-      <tr><td><?php _e('PHP Version', 'users-without-email'); ?></td>
-        <td><?php echo phpversion(); ?>
-        <?php
-        if (version_compare('5.2', phpversion()) > 0) {
-          echo '&nbsp;&nbsp;&nbsp;<span style="background-color: #ffcc00;">';
-          _e('(WARNING: This plugin may not work properly with versions earlier than PHP 5.2)', 'users-without-email');
-          echo '</span>';
-        }
-        ?>
-        </td>
-      </tr>
-      <tr><td><?php _e('MySQL Version', 'users-without-email'); ?></td>
-        <td><?php echo $this->getMySqlVersion() ?>
-          <?php
-          echo '&nbsp;&nbsp;&nbsp;<span style="background-color: #ffcc00;">';
-          if (version_compare('5.0', $this->getMySqlVersion()) > 0) {
-            _e('(WARNING: This plugin may not work properly with versions earlier than MySQL 5.0)', 'users-without-email');
-          }
-          echo '</span>';
-          ?>
-        </td>
-      </tr>
-      </tbody></table>
-
       <h2><?php echo $this->getPluginDisplayName(); echo ' '; _e('Settings', 'users-without-email'); ?></h2>
 
       <form method="post" action="">

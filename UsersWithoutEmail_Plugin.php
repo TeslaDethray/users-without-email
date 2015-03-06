@@ -8,7 +8,9 @@ class UsersWithoutEmail_Plugin extends UsersWithoutEmail_LifeCycle {
    * @return array of option meta data.
    */
   public function getOptionMetaData() {
-    return array();
+    return array(
+      //'recaptcha_site_key' => array('reCAPTCHA Site Key')
+    );
   }
 
 //  public function getOptionValueI18nString($optionValue) {
@@ -88,6 +90,7 @@ class UsersWithoutEmail_Plugin extends UsersWithoutEmail_LifeCycle {
         <label for="pass1">Repeat Password<br>
         <input type="password" name="pass2" id="pass2" class="input" value="" size="25" required></label>
       </p>
+      <?php echo $this->honeypot(); ?>
       <input type="hidden" name="user_email" value="<?php echo $this->generate_random_string(); ?>@email.com">
       <input type="hidden" name="referrer" value="<?php echo $_SERVER['HTTP_REFERER']; ?>">
       <style>p#reg_passmail, label[for="user_email"] {display: none;}</style>
@@ -150,10 +153,16 @@ class UsersWithoutEmail_Plugin extends UsersWithoutEmail_LifeCycle {
   }
 
   public function register_extra_fields($user_id, $password = "", $meta = array()) {
-    setcookie($this->getPluginCookieName(), $_POST['referrer']);
-    $this->unset_email($user_id);
-    if($_POST['pass1'] == $_POST['pass2']) wp_update_user(array('ID' => $user_id, 'user_pass' => $_POST['pass1']));
-    $this->auto_login($_POST['user_login']);
+    if($_POST['plugin_feedback_' . $this->getPluginCookieName()] == '')  {  
+      setcookie($this->getPluginCookieName(), $_POST['referrer']);
+      $this->unset_email($user_id);
+      if($_POST['pass1'] == $_POST['pass2']) wp_update_user(array('ID' => $user_id, 'user_pass' => $_POST['pass1']));
+      $this->auto_login($_POST['user_login']);
+    } else {
+      require_once(ABSPATH . '/wp-admin/includes/user.php');
+      wp_delete_user($user_id);
+      echo '<meta http-equiv="refresh" content="0;url=' . home_url() . '" />';
+    }
   }
 
   public function make_email_optional($user) {
@@ -177,19 +186,18 @@ class UsersWithoutEmail_Plugin extends UsersWithoutEmail_LifeCycle {
     wp_update_user(array('ID' => $user_id, 'user_email' => ''));
   }
 
-  public function enqueue_jquery() {
-    wp_enqueue_script('jquery');
+  /*public function captcha() {
+    if (($this->getOption('recaptcha_site_key') != '') && ($this->getOption('recaptcha_site_key') !== false)) return '<script src="https://www.google.com/recaptcha/api.js"></script><div class="g-recaptcha" data-sitekey="' . $this->getOption('recaptcha_site_key') . '" style="max-width: 272px;"></div>';
+    return '';
+  }*/
+
+  public function honeypot() {
+    return '<textarea name="plugin_feedback_' . $this->getPluginCookieName() . '" id="plugin_feedback_' . $this->getPluginCookieName() . '"></textarea><style>#plugin_feedback_' . $this->getPluginCookieName() . '{display: none;}</style>';
   }
 
   public function addActionsAndFilters() {
     // Add options administration page
     //add_action('admin_menu', array(&$this, 'addSettingsSubMenuPage'));
-
-    // Example adding a script & style just for the options administration page
-    //    if (strpos($_SERVER['REQUEST_URI'], $this->getSettingsSlug()) !== false) {
-    //      wp_enqueue_script('my-script', plugins_url('/js/my-script.js', __FILE__));
-    //      wp_enqueue_style('my-style', plugins_url('/css/my-style.css', __FILE__));
-    //    }
 
     // Add Actions & Filters
     add_action('register_form', array(&$this, 'show_password_field'));
@@ -199,7 +207,6 @@ class UsersWithoutEmail_Plugin extends UsersWithoutEmail_LifeCycle {
     add_action('personal_options_update', array(&$this, 'set_false_email'));
 
     // Adding scripts & styles to all pages
-    add_action('admin_enqueue_scripts', array(&$this, 'enqueue_jquery'));
 
     // Register short codes
 
