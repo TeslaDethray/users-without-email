@@ -11,12 +11,12 @@ class UsersWithoutEmail_Plugin extends UsersWithoutEmail_LifeCycle {
     return array();
   }
 
-//  protected function getOptionValueI18nString($optionValue) {
+//  public function getOptionValueI18nString($optionValue) {
 //    $i18nValue = parent::getOptionValueI18nString($optionValue);
 //    return $i18nValue;
 //  }
 
-  protected function initOptions() {
+  public function initOptions() {
     $options = $this->getOptionMetaData();
     if (!empty($options)) {
       foreach ($options as $key => $arr) {
@@ -31,8 +31,16 @@ class UsersWithoutEmail_Plugin extends UsersWithoutEmail_LifeCycle {
     return 'Users Without Email';
   }
 
-  protected function getMainPluginFileName() {
+  public function getMainPluginFileName() {
     return 'users-without-email.php';
+  }
+
+  public function getPluginCookieName() {
+    return 'users-without-email';
+  }
+
+  public function falseEmailAddress() {
+    return 'deleteme12345@deletemenow09876.com';
   }
 
   /**
@@ -42,7 +50,7 @@ class UsersWithoutEmail_Plugin extends UsersWithoutEmail_LifeCycle {
    * (2) make table names lower case only
    * @return void
    */
-  protected function installDatabaseTables() {
+  public function installDatabaseTables() {
     //    global $wpdb;
     //    $tableName = $this->prefixTableName('mytable');
     //    $wpdb->query("CREATE TABLE IF NOT EXISTS `$tableName` (
@@ -53,7 +61,7 @@ class UsersWithoutEmail_Plugin extends UsersWithoutEmail_LifeCycle {
    * Drop plugin-created tables on uninstall.
    * @return void
    */
-  protected function unInstallDatabaseTables() {
+  public function unInstallDatabaseTables() {
     //    global $wpdb;
     //    $tableName = $this->prefixTableName('mytable');
     //    $wpdb->query("DROP TABLE IF EXISTS `$tableName`");
@@ -64,6 +72,113 @@ class UsersWithoutEmail_Plugin extends UsersWithoutEmail_LifeCycle {
    * @return void
    */
   public function upgrade() {
+  }
+
+  /**
+  * Add custom field to registration form
+  */
+  public function show_password_field() {
+    ?>
+      <script type="text/javascript" src="http://www.technicalkeeda.com/js/javascripts/plugin/jquery.js"></script>
+      <p>
+        <label for="pass1">Password<br>
+        <input type="password" name="pass1" id="pass1" class="input" value="" size="25" required></label>
+      </p>
+      <p>
+        <label for="pass1">Repeat Password<br>
+        <input type="password" name="pass2" id="pass2" class="input" value="" size="25" required></label>
+      </p>
+      <input type="hidden" name="user_email" value="<?php echo $this->generate_random_string(); ?>@email.com">
+      <input type="hidden" name="referrer" value="<?php echo $_SERVER['HTTP_REFERER']; ?>">
+      <style>p#reg_passmail, label[for="user_email"] {display: none;}</style>
+      <script>
+        $('form#registerform').submit(function(event) {
+          if($('input#pass1').val() == '') {
+            output_error('Please enter a password.');
+            event.preventDefault();
+          } else if($('input#pass2').val() == '') {
+            output_error('Please verify your password.');
+            event.preventDefault();
+          } else if($('input#pass1').val() != $('input#pass2').val()) {
+            output_error('Your passwords do not match.');
+            event.preventDefault();
+          }
+        }); 
+        function output_error($text) {
+          $('div#login_error').remove();
+          $('form#registerform').before('<div id="login_error"><strong>ERROR</strong>: ' + $text + '<br></div>');
+        }
+      </script>
+    <?php
+  }
+
+  //http://stackoverflow.com/questions/4356289/php-random-string-generator
+  public function generate_random_string($length = 13) {
+    $characters = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
+    $charactersLength = strlen($characters);
+    $randomString = '';
+    for($i = 0; $i < $length; $i++) {
+      $randomString .= $characters[rand(0, $charactersLength - 1)];
+    }
+    return $randomString;
+  }
+
+  //https://wprecipies.wordpress.com/2010/09/03/wordpress-auto-login/
+  public function auto_login($user_login) {
+    if (!is_user_logged_in()) {
+      ////get users password
+      $user = new WP_User($user_login);
+      $user_pass = md5($user->user_pass);
+      
+      //login, set cookies, and set current user
+      wp_login($user_login, $user_pass, true);
+      wp_setcookie($user_login, $user_pass, true);
+      wp_set_current_user($user->ID, $user_login);
+    }
+  }
+
+  public function get_user($user_login) {
+    return new WP_User(0, $user_login);
+  }
+
+  public function login_reroute() {
+    if(isset($_COOKIE[$this->getPluginCookieName()])) {
+      $cookie = $_COOKIE[$this->getPluginCookieName()];
+      setcookie($this->getPluginCookieName(), '', time() - (60 * 60 * 24 * 365));
+      echo '<META http-equiv="refresh" content="0;URL=' . $cookie . '">';
+    }
+  }
+
+  public function register_extra_fields($user_id, $password = "", $meta = array()) {
+    setcookie($this->getPluginCookieName(), $_POST['referrer']);
+    $this->unset_email($user_id);
+    if($_POST['pass1'] == $_POST['pass2']) wp_update_user(array('ID' => $user_id, 'user_pass' => $_POST['pass1']));
+    $this->auto_login($_POST['user_login']);
+  }
+
+  public function make_email_optional($user) {
+    echo '<style>label[for="email"] span.description {display: none;}</style>';
+    $this->unset_false_email($user);
+  }
+
+  public function set_false_email($user) {
+    if($_POST['email'] == '') $_POST['email'] = $this->falseEmailAddress();
+  }
+
+  public function unset_false_email() {
+    global $current_user;
+    if($current_user->user_email == $this->falseEmailAddress()) {
+      $this->unset_email($current_user->ID); 
+      echo '<meta http-equiv="refresh" content="0">';
+    }
+  }
+
+  public function unset_email($user_id) {
+    wp_update_user(array('ID' => $user_id, 'user_email' => ''));
+  }
+
+  public function enqueue_jquery() {
+    wp_enqueue_script('jquery');
   }
 
   public function addActionsAndFilters() {
@@ -77,12 +192,14 @@ class UsersWithoutEmail_Plugin extends UsersWithoutEmail_LifeCycle {
     //    }
 
     // Add Actions & Filters
+    add_action('register_form', array(&$this, 'show_password_field'));
+    add_action('user_register', array(&$this, 'register_extra_fields'));
+    add_action('login_head', array(&$this, 'login_reroute'));
+    add_action('show_user_profile', array(&$this, 'make_email_optional'));
+    add_action('personal_options_update', array(&$this, 'set_false_email'));
 
     // Adding scripts & styles to all pages
-    // Examples:
-    //    wp_enqueue_script('jquery');
-    //    wp_enqueue_style('my-style', plugins_url('/css/my-style.css', __FILE__));
-    //    wp_enqueue_script('my-script', plugins_url('/js/my-script.js', __FILE__));
+    add_action('admin_enqueue_scripts', array(&$this, 'enqueue_jquery'));
 
     // Register short codes
 
