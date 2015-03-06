@@ -23,6 +23,7 @@ Install via the WordPress UI or download the file and unzip into your plugins di
 == Screenshots ==
 
 1. Here's how the registaration screen looks with the plugin activated:
+![ScreenShot](assets/screenshot-1.png)
 
 == Changelog ==
 
