@@ -1,7 +1,7 @@
 === Users Without Email ===
-Contributors: <a href="http://tesladethray.com">Sara McCutcheon</a>
+Contributors: Sara McCutcheon
 Donate link:
-Tags:
+Tags: registration, email
 License: GPLv3
 License URI: http://www.gnu.org/licenses/gpl-3.0.html
 Requires at least: 3.5
