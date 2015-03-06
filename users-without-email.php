@@ -2,7 +2,7 @@
 /*
    Plugin Name: Users Without Email
    Plugin URI: http://wordpress.org/extend/plugins/users-without-email/
-   Version: 0.1
+   Version: 1.0
    Author: <a href="http://tesladethray.com">Sara McCutcheon</a>
    Description: Allows users to sign up without needing to enter an email address
    Text Domain: users-without-email
