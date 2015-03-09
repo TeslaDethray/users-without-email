@@ -9,7 +9,9 @@ class UsersWithoutEmail_Plugin extends UsersWithoutEmail_LifeCycle {
    */
   public function getOptionMetaData() {
     return array(
-      //'recaptcha_site_key' => array('reCAPTCHA Site Key')
+      //'recaptcha_site_key' => array(__('reCAPTCHA Site Key', 'users-without-email')),
+      //'security_type' => array(__('Preferred security option', 'users-without-email'), 'Honeypot', 'reCAPTCHA', 'None'),
+      'email_optional' => array(__('Optionally allow email submission on registration', 'users-without-email'), 'No', 'Yes')
     );
   }
 
@@ -187,7 +189,7 @@ class UsersWithoutEmail_Plugin extends UsersWithoutEmail_LifeCycle {
   }
 
   /*public function captcha() {
-    if (($this->getOption('recaptcha_site_key') != '') && ($this->getOption('recaptcha_site_key') !== false)) return '<script src="https://www.google.com/recaptcha/api.js"></script><div class="g-recaptcha" data-sitekey="' . $this->getOption('recaptcha_site_key') . '" style="max-width: 272px;"></div>';
+    if (($this->getOption('recaptcha_site_key') != '') && ($this->getOption('recaptcha_site_key') !== false)) return '<script src="https://www.google.com/recaptcha/api.js"></script><div class="g-recaptcha" data-sitekey="' . $this->getOption('recaptcha_site_key') . '"></div>';
     return '';
   }*/
 
@@ -197,7 +199,7 @@ class UsersWithoutEmail_Plugin extends UsersWithoutEmail_LifeCycle {
 
   public function addActionsAndFilters() {
     // Add options administration page
-    //add_action('admin_menu', array(&$this, 'addSettingsSubMenuPage'));
+    add_action('admin_menu', array(&$this, 'addSettingsSubMenuPage'));
 
     // Add Actions & Filters
     add_action('register_form', array(&$this, 'show_password_field'));
